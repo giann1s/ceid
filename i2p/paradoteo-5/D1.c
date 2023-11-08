@@ -91,7 +91,7 @@ void get_name(char name[]) {
 }
 
 void str_reverse(char array[], int size) {
-    char temp = NULL;
+    char temp;
 
     for (int i=0; i<size/2; i++) {
         temp = array[i];
