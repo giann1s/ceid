@@ -63,8 +63,8 @@ void display_menu() {
     "2. Print name with \%s\n"
     "3. Print name with \%c\n"
     "4. Print each character in a seperate row\n"
-    "5. Print name by removing an other letter in each row (starting with first)\n"
-    "6. Print name by removing an other letter in each row (starting with last)\n"
+    "5. Print name by removing one more letter in each row (starting with first)\n"
+    "6. Print name by removing one more letter in each row (starting with last)\n"
     "7. Print name reversed using option 6\n";
     printf("%s", menu);
 
