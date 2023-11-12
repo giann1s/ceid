@@ -49,15 +49,13 @@ int main() {
 }
 
 int gcd(int num1, int num2) {
-	int i;
-	int gcd = 1;
-	int smallest_int = num1 < num2 ? num1 : num2;
-	
-	for (i = 2; i <= smallest_int; i++) {
-		if (num1%i == 0 && num2%i == 0) {
-			gcd = i;
-		}
+	int remainder;
+
+	while (num2 != 0) {	// Use Euclid's algorithm
+		remainder = num1 % num2;
+		num1 = num2;
+		num2 = remainder;
 	}
 
-	return gcd;
+	return num1;
 }
