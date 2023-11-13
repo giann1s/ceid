@@ -107,7 +107,7 @@ void display_stats(char words[][MAX_LENGTH], int words_num) {
                 min_len = len;
         }
 
-        printf("Max length: %d\nMin lenght: %d\nAverage length: %f\n", max_len, min_len, (float) average_len / words_num);
+        printf("Max length: %d\nMin length: %d\nAverage length: %f\n", max_len, min_len, (float) average_len / words_num);
     }
     else
         printf("No words available\n");
