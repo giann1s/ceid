@@ -8,54 +8,54 @@ int main() {
 
     char input[100];
     char oper;
-	int num1, den1, num2, den2, terms_gcd;
+    int num1, den1, num2, den2, terms_gcd;
 
-	int numerator, denominator;
+    int numerator, denominator;
 
-	printf("How many expressions do you want to insert?: ");
+    printf("How many expressions do you want to insert?: ");
     scanf("%d", &exp);
 
-    for (i = 0; i<exp; i++) {
+    for (i = 0; i < exp; i++) {
         readExpression(&oper, &num1, &den1, &num2, &den2);
 
         switch (oper) {
-        	case '+':
-        		numerator = num1 * den2 + num2*den1;
-        		denominator = den1 * den2;
-				break;
-			case '-':
-        		numerator = num1 * den2 - num2*den1;
-        		denominator = den1 * den2;
-				break;
-			case '*':
-				numerator = num1 * num2;
-				denominator = den1 * den2;
-				break;
-			case '/':
-				numerator = num1 * den2;
-				denominator = num2 * den1;
-				break;
-		}
+            case '+':
+                numerator = num1 * den2 + num2 * den1;
+                denominator = den1 * den2;
+                break;
+            case '-':
+                numerator = num1 * den2 - num2 * den1;
+                denominator = den1 * den2;
+                break;
+            case '*':
+                numerator = num1 * num2;
+                denominator = den1 * den2;
+                break;
+            case '/':
+                numerator = num1 * den2;
+                denominator = num2 * den1;
+                break;
+        }
 
-		terms_gcd = gcd(numerator, denominator);
+        terms_gcd = gcd(numerator, denominator);
 
-		numerator /= terms_gcd;
-		denominator /= terms_gcd;
+        numerator /= terms_gcd;
+        denominator /= terms_gcd;
 
-		printf("%d / %d\n", numerator, denominator);
+        printf("%d / %d\n", numerator, denominator);
     }
 
     return 0;
 }
 
 int gcd(int num1, int num2) {
-	int remainder;
+    int remainder;
 
-	while (num2 != 0) {	// Use Euclid's algorithm
-		remainder = num1 % num2;
-		num1 = num2;
-		num2 = remainder;
-	}
+    while (num2 != 0) {  // Use Euclid's algorithm
+        remainder = num1 % num2;
+        num1 = num2;
+        num2 = remainder;
+    }
 
-	return num1;
+    return num1;
 }
