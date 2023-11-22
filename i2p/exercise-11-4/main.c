@@ -1,3 +1,12 @@
+/*
+Για όσο η επιλογη δεν ειναι 0
+    Τύπωσε το μενού και πάρε την επιλογή από τον χρήστη
+    Αν ειναι 1 πάρε τις λέξεις από τον χρήστη
+    Αν είναι 2 τυπωσε τις λέξεις αν ο χρήστης έχει δώσει κάποιες
+    Αν είναι 3 δώσε τα στατιστικά
+    Αν είναι 4 δώσε τα στατιστικά για συγκεκριμένο χαρακτήρα που θα δώσει ο χρήστης
+*/
+
 #define MAX_LENGTH 30
 
 #include <stdio.h>
@@ -10,7 +19,7 @@ void display_stats(char words[][MAX_LENGTH], int max_words);
 void display_char_stats(char words[][MAX_LENGTH], int words_num);
 
 int main() {
-    int i, option, options = 4, max_words = 30;
+    int i, option = -1, options = 4, max_words = 30;
 
     int words_num = 0;
     char words[30][MAX_LENGTH];
