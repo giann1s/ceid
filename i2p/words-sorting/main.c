@@ -130,8 +130,7 @@ void display_stats(char words[][MAX_LENGTH], int words_num) {
 
         printf("Max length: %d\nMin length: %d\nAverage length: %.2f\n", max_len, min_len, (float) average_len / words_num);
     }
-    else
-        printf("No words available\n");
+    else printf("No words available\n");
 }
 
 void display_char_stats(char words[][MAX_LENGTH], int words_num) {
@@ -167,6 +166,5 @@ void display_char_stats(char words[][MAX_LENGTH], int words_num) {
         printf("Occurrences: %d\nAverage occurrences/word: %.2f\nMax occurrences: %d (first in %s)\nMin occurrences: %d (first in %s)\n",
             occurrences, (float) occurrences / words_num, max_occ, words[max_idx], min_occ, words[min_idx]);
     }
-    else
-        printf("No words available\n");
+    else printf("No words available\n");
 }
