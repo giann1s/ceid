@@ -19,13 +19,9 @@ int main() {
 }
 
 void bubble_sort(int integers[], int size) {
-    int i;
-
     if (size != 1) {
-        for (i=0; i<size && size-i>1 && ! is_sorted(integers, size); i++) {
-            move_bubble_up(integers, size);
-            bubble_sort(integers, size-i);
-        }
+        move_bubble_up(integers, size);
+        bubble_sort(integers, size-1);
     }
 }
 
