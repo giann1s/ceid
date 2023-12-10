@@ -19,7 +19,7 @@ int main() {
 }
 
 void bubble_sort(int integers[], int size) {
-    if (size != 1) {
+    if (size != 1 && ! is_sorted(integers, size)) {
         move_bubble_up(integers, size);
         bubble_sort(integers, size-1);
     }
