@@ -7,7 +7,11 @@ void move_bubble_up(int max_length, char strings[][max_length], int size);
 int main() {
     int i;
     char strings[11][4] = {"cde", "abc", "cef","abb", "aab", "klm","kab", "gbc", "gab", "aaa", "abc"};
-    
+
+    printf("\nStrings:");
+    for (i=0; i<11; i++) printf("\t%s", strings[i]);
+    printf("\n\n");
+
     bubble_sort(4, strings, 11);
 
     printf("\nResult:");
@@ -20,7 +24,7 @@ int main() {
 void bubble_sort(int max_length, char strings[][max_length], int size) {
     int i;
 
-    for (i=0; i<size && size-i>1; i++) {
+    for (i=0; i<size-1; i++) {
         printf("== Pass %d ==\n", i+1);
         move_bubble_up(max_length, strings, size-i);
         printf("\n");

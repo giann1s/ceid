@@ -6,7 +6,11 @@ void move_bubble_up(int integers[], int size);
 int main() {
     int i;
     int integers[10] = {3,5,4,7,2,8,1,0,9,6};
-    
+
+    printf("Array: ");
+    for (i=0; i<10; i++) printf("\t%d", integers[i]);
+    printf("\n\n");
+
     bubble_sort(integers, 10);
 
     printf("\nResult:");

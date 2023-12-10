@@ -5,12 +5,16 @@ void move_bubble_up(int integers[], int size);
 
 int main() {
     int i;
-    int integers[10] = {3,5,4,7,2,8,1,0,9,6};
-    
-    bubble_sort(integers, 10);
+    int integers[12] = {3, 0, 2, 7,  5,  6,  9, 1, 8, 4, 9, 8};
+
+    printf("Array: ");
+    for (i=0; i<12; i++) printf("\t%d", integers[i]);
+    printf("\n\n");
+
+    bubble_sort(integers, 12);
 
     printf("\nResult:");
-    for (i=0; i<10; i++) printf("\t%d", integers[i]);
+    for (i=0; i<12; i++) printf("\t%d", integers[i]);
     printf("\n");
 
     return 0;
@@ -19,7 +23,7 @@ int main() {
 void bubble_sort(int integers[], int size) {
     int i;
 
-    for (i=0; i<size && size-i>1; i++) {
+    for (i=0; i<size-1; i++) {
         printf("== Pass %d ==\n", i+1);
         move_bubble_up(integers, size-i);
         printf("\n");

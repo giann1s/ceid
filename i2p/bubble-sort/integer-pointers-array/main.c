@@ -15,7 +15,11 @@ int main() {
         integers[i] = malloc(sizeof(int));
         *integers[i] = data[i];
     }
-    
+
+    printf("Array: ");
+    for (i=0; i<10; i++) printf("\t%d", *integers[i]);
+    printf("\n\n");
+
     bubble_sort(integers, 10);
 
     printf("Result:");
@@ -33,7 +37,7 @@ void bubble_sort(int *integers[], int size) {
     int i;
 
     if (size != 1) {
-        for (i=0; i<size && size-i>1 && ! is_sorted(integers, size); i++) {
+        for (i=0; i<size-1 && ! is_sorted(integers, size); i++) {
             move_bubble_up(integers, size);
             bubble_sort(integers, size-i);
         }

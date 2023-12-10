@@ -7,12 +7,16 @@ bool is_sorted(int integers[], int size);
 
 int main() {
     int i;
-    int integers[10] = {3,5,4,7,2,8,1,0,9,6};
-    
-    bubble_sort(integers, 10);
+    int integers[6] = {1,0,4,3,5,2};
+
+    printf("Array: ");
+    for (i=0; i<6; i++) printf("\t%d", integers[i]);
+    printf("\n\n");
+
+    bubble_sort(integers, 6);
 
     printf("Result:");
-    for (i=0; i<10; i++) printf("\t%d", integers[i]);
+    for (i=0; i<6; i++) printf("\t%d", integers[i]);
     printf("\n");
 
     return 0;
