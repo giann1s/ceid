@@ -7,18 +7,21 @@
 // Positive integers are used
 // for selecting specific order
 // (status_idx in function display_orders)
-#define PENDING -1
-#define READY -2
-#define CLOSED -3
-#define ANY_STATUS -4
+#define ANY_STATUS -1
+#define PENDING -2
+#define READY -3
+#define CLOSED -4
 
 #define PLACE 1
 #define CLOSE 2
 
+#define MAX_DATA_LINE_LEN 150
+#define DATA_NUM 9  // number of Order struct members
+
 typedef struct order {
     int status;
 
-    char customer_name[20];
+    char customer_name[22];
 
     char creation_date[11];
     char date[11];
@@ -34,47 +37,13 @@ typedef struct order {
 int get_choice();
 Order get_order();
 void display_orders(Order orders[], int num, int status);
-void export_orders();
-void import_orders();
+void export_orders(char filename[], Order orders[], int orders_num, int status);
+void import_orders(char filename[], Order orders[], int *orders_num, int status);
 void modify_order(Order orders[], int orders_num, int action);
 
 int main() {
     int orders_num=0, choice = -1;
     Order orders[10];
-
-    /* =============== For testing ================= */
-    orders[0].status=PENDING;
-    strcpy(orders[0].customer_name, "Nikos Papadopoulos");
-    strcpy(orders[0].creation_date, "15/12/2023");
-    strcpy(orders[0].date, "18/12/2023");
-    strcpy(orders[0].execution_date, "25/12/2023");
-    orders[0].small_bottles=20;
-    orders[0].big_bottles=4000;
-    orders[0].initial_price = 302;
-    orders[0].discount_percentage = 0.08;
-
-    orders[1].status=READY;
-    strcpy(orders[1].customer_name, "Panagiotis");
-    strcpy(orders[1].creation_date, "15/12/2023");
-    strcpy(orders[1].date, "18/12/2023");
-    strcpy(orders[1].execution_date, "24/12/2023");
-    orders[1].small_bottles=400;
-    orders[1].big_bottles=600;
-    orders[1].initial_price = 602;
-    orders[1].discount_percentage = 0.2;
-
-    orders[2].status=CLOSED;
-    strcpy(orders[2].customer_name, "Dimitris Xantzis");
-    strcpy(orders[2].creation_date, "15/12/2023");
-    strcpy(orders[2].date, "18/12/2023");
-    strcpy(orders[2].execution_date, "23/12/2023");
-    orders[2].small_bottles=1000;
-    orders[2].big_bottles=3000;
-    orders[2].initial_price = 1002;
-    orders[2].discount_percentage = 0.2;
-
-    orders_num+=3;
-    /* ========================================== */
 
     do {
         choice = get_choice();
@@ -93,10 +62,10 @@ int main() {
                 display_orders(orders, orders_num, PENDING);
                 break;
             case 4:
-                export_orders();
+                export_orders("pending_orders.dat", orders, orders_num, PENDING);
                 break;
             case 5:
-                import_orders();
+                import_orders("pending_orders.dat", orders, &orders_num, PENDING);
                 break;
             case 6:
                 modify_order(orders, orders_num, PLACE);
@@ -111,10 +80,10 @@ int main() {
                 display_orders(orders, orders_num, CLOSED);
                 break;
             case 10:
-                export_orders();
+                export_orders("closed_orders.dat", orders, orders_num, CLOSED);
                 break;
             case 11:
-                import_orders();
+                import_orders("closed_orders.dat", orders, &orders_num, CLOSED);
                 break;
         }
 
@@ -143,6 +112,7 @@ int get_choice() {
     printf("%s\n", menu);
     printf("Enter option number: ");
     scanf("%d", &option);
+    getchar();
     printf("\n");
 
     return option;
@@ -154,21 +124,25 @@ Order get_order() {
     order.status = PENDING;
 
     printf("Insert customer full-name: ");
-    scanf("%s", &order.customer_name);
+    scanf("%[^\n]%*c", order.customer_name);
 
     printf("Insert creation date: ");
-    scanf("%s", &order.creation_date);
+    scanf("%s", order.creation_date);
+    getchar();
 
     printf("Insert date: ");
-    scanf("%s", &order.date);
+    scanf("%s", order.date);
+    getchar();
 
     strcpy(order.execution_date, "");
 
     printf("Insert the number of small bottles: ");
     scanf("%d", &order.small_bottles);
+    getchar();
 
     printf("Insert the number of big bottles: ");
     scanf("%d", &order.big_bottles);
+    getchar();
 
     printf("\n");
 
@@ -205,7 +179,7 @@ void display_orders(Order orders[], int orders_num, int status_idx) {
         }
 
         if (status_idx == ANY_STATUS || orders[i].status == status_idx || status_idx >= 0)
-            printf("%d %-19s %5d %5d %11s %11s %11s %11s%s %11s%s %4s %8s\n",
+            printf("%d %-21s %5d %5d %11s %11s %11s %11s%s %11s%s %4s %8s\n",
                 i+1,
                 orders[i].customer_name,
                 orders[i].small_bottles,
@@ -221,15 +195,65 @@ void display_orders(Order orders[], int orders_num, int status_idx) {
     printf("\n");
 }
 
-void export_orders() {
+void export_orders(char filename[], Order orders[], int orders_num, int status) {
+    int idx;
+
+    FILE *file_handler = fopen(filename, "w");
+
+    for (idx=0; idx<orders_num; idx++) {
+        if (orders[idx].status == status || status == ANY_STATUS) {
+            fprintf(file_handler, "%d;%s;%s;%s;%s;%d;%d;%f;%f\n",
+                orders[idx].status,
+                orders[idx].customer_name,
+                orders[idx].creation_date,
+                orders[idx].date,
+                orders[idx].execution_date,
+                orders[idx].small_bottles,
+                orders[idx].big_bottles,
+                orders[idx].initial_price,
+                orders[idx].discount_percentage);
+        }
+    }
+
+    fclose(file_handler);
+
     printf("Orders Exported\n\n");
 }
 
-void import_orders() {
+void import_orders(char filename[], Order orders[], int *orders_num, int status) {
+    char buffer[MAX_DATA_LINE_LEN];
+
+    FILE *file_handler = fopen(filename, "r");
+
+    while (fgets(buffer, 150, file_handler) != NULL) {  // Read file
+
+        sscanf(buffer, "%d;%[a-zA-Z ];%[0-9/];%[0-9/];%[0-9/];%d;%d;%f;%f",
+            &orders[*orders_num].status,
+            orders[*orders_num].customer_name,
+            orders[*orders_num].creation_date,
+            orders[*orders_num].date,
+            &orders[*orders_num].execution_date,
+            &orders[*orders_num].small_bottles,
+            &orders[*orders_num].big_bottles,
+            &orders[*orders_num].initial_price,
+            &orders[*orders_num].discount_percentage);
+        
+        (*orders_num)++;
+    }
+
+    fclose(file_handler);
+
     printf("Orders Imported\n\n");
 }
 
 void modify_order(Order orders[], int orders_num, int action) {
+
+    // First come first served
+
+    // Pending:                     Ready:
+    // 1. Calculate initial price   1. Calculate discount
+    // 2. PENDING -> READY          2. READY -> CLOSED
+
     int order_idx = 0, target_status = (action == PLACE) ? PENDING : READY;
 
     while(orders[order_idx].status != target_status && order_idx<orders_num) {
