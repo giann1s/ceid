@@ -192,7 +192,7 @@ void display_orders(Order orders[], int orders_num, int status_idx) {
     for (; i<orders_num; i++) {
         sprintf(initial_price_str, "%.2f\u20AC", orders[i].initial_price);
         sprintf(final_price_str, "%.2f\u20AC", orders[i].initial_price * (1 - orders[i].discount_percentage));
-        sprintf(discount_str, "%3.0f%%", orders[i].discount_percentage);
+        sprintf(discount_str, "%3.0f%%", orders[i].discount_percentage * 100);
 
         if (orders[i].status == PENDING) {
             strcpy(initial_price_str, "N/A  ");
