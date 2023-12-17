@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define small_bottle_cost 0.008
@@ -31,7 +32,7 @@ typedef struct order {
     int big_bottles;
 
     float initial_price;
-    float discount_percentage;
+    float discount;
 } Order;
 
 int get_choice();
@@ -62,10 +63,10 @@ int main() {
                 display_orders(orders, orders_num, PENDING);
                 break;
             case 4:
-                export_orders("pending_orders.dat", orders, orders_num, PENDING);
+                export_orders("pending_orders.yaml", orders, orders_num, PENDING);
                 break;
             case 5:
-                import_orders("pending_orders.dat", orders, &orders_num, PENDING);
+                import_orders("pending_orders.yaml", orders, &orders_num, PENDING);
                 break;
             case 6:
                 modify_order(orders, orders_num, PLACE);
@@ -80,10 +81,10 @@ int main() {
                 display_orders(orders, orders_num, CLOSED);
                 break;
             case 10:
-                export_orders("closed_orders.dat", orders, orders_num, CLOSED);
+                export_orders("closed_orders.yaml", orders, orders_num, CLOSED);
                 break;
             case 11:
-                import_orders("closed_orders.dat", orders, &orders_num, CLOSED);
+                import_orders("closed_orders.yaml", orders, &orders_num, CLOSED);
                 break;
         }
 
@@ -147,7 +148,7 @@ Order get_order() {
     printf("\n");
 
     order.initial_price = 0;
-    order.discount_percentage = 0;
+    order.discount = 0;
 
     return order;
 }
@@ -165,8 +166,8 @@ void display_orders(Order orders[], int orders_num, int status_idx) {
 
     for (; i<orders_num; i++) {
         sprintf(initial_price_str, "%.2f\u20AC", orders[i].initial_price);
-        sprintf(final_price_str, "%.2f\u20AC", orders[i].initial_price * (1 - orders[i].discount_percentage));
-        sprintf(discount_str, "%3.0f%%", orders[i].discount_percentage * 100);
+        sprintf(final_price_str, "%.2f\u20AC", orders[i].initial_price * (1 - orders[i].discount));
+        sprintf(discount_str, "%3.0f%%", orders[i].discount * 100);
 
         if (orders[i].status == PENDING) {
             strcpy(initial_price_str, "N/A  ");
@@ -198,11 +199,22 @@ void display_orders(Order orders[], int orders_num, int status_idx) {
 void export_orders(char filename[], Order orders[], int orders_num, int status) {
     int idx;
 
-    FILE *file_handler = fopen(filename, "w");
+    FILE *file_handler = fopen(filename, "w+");
 
     for (idx=0; idx<orders_num; idx++) {
         if (orders[idx].status == status || status == ANY_STATUS) {
-            fprintf(file_handler, "%d;%s;%s;%s;%s;%d;%d;%f;%f\n",
+            fprintf(file_handler,
+                "%d:\n"
+                "  status: %d\n"
+                "  customer_name: %s\n"
+                "  creation_date: %s\n"
+                "  date: %s\n"
+                "  execution_date: %s\n"
+                "  small_bottles: %d\n"
+                "  big_bottles: %d\n"
+                "  initial_price: %f\n"
+                "  discount: %f\n",
+                idx,
                 orders[idx].status,
                 orders[idx].customer_name,
                 orders[idx].creation_date,
@@ -211,7 +223,7 @@ void export_orders(char filename[], Order orders[], int orders_num, int status) 
                 orders[idx].small_bottles,
                 orders[idx].big_bottles,
                 orders[idx].initial_price,
-                orders[idx].discount_percentage);
+                orders[idx].discount);
         }
     }
 
@@ -222,23 +234,52 @@ void export_orders(char filename[], Order orders[], int orders_num, int status) 
 
 void import_orders(char filename[], Order orders[], int *orders_num, int status) {
     char buffer[MAX_DATA_LINE_LEN];
+    int indent=0;
+    char key[20], value[20];
 
     FILE *file_handler = fopen(filename, "r");
 
-    while (fgets(buffer, 150, file_handler) != NULL) {  // Read file
+    while (fgets(buffer, 150, file_handler) != NULL) {
+        while (buffer[indent] == ' ') {
+            indent++;
+        }
 
-        sscanf(buffer, "%d;%[a-zA-Z ];%[0-9/];%[0-9/];%[0-9/];%d;%d;%f;%f",
-            &orders[*orders_num].status,
-            orders[*orders_num].customer_name,
-            orders[*orders_num].creation_date,
-            orders[*orders_num].date,
-            &orders[*orders_num].execution_date,
-            &orders[*orders_num].small_bottles,
-            &orders[*orders_num].big_bottles,
-            &orders[*orders_num].initial_price,
-            &orders[*orders_num].discount_percentage);
-        
-        (*orders_num)++;
+        if (buffer[0] != '\n') {
+            if (indent == 0) (*orders_num)++;
+            else if (indent == 2) {
+                sscanf(buffer, "  %[_a-zA-Z]: %[a-zA-Z0-9-/. ]", key, value);
+
+                if (strcmp(key, "status") == 0) {
+                    sscanf(value, "%d", &orders[*orders_num-1].status);
+                }
+                else if (strcmp(key, "customer_name") == 0) {
+                    sscanf(value, "%[a-zA-Z ]", &orders[*orders_num-1].customer_name);
+                }
+                else if (strcmp(key, "creation_date") == 0) {
+                    sscanf(value, "%[0-9/]", &orders[*orders_num-1].creation_date);
+                }
+                else if (strcmp(key, "date") == 0) {
+                    sscanf(value, "%[0-9/]", &orders[*orders_num-1].date);
+                }
+                else if (strcmp(key, "execution_date") == 0) {
+                    sscanf(value, "%[0-9/]", &orders[*orders_num-1].execution_date);
+                }
+                else if (strcmp(key, "small_bottles") == 0) {
+                    sscanf(value, "%d", &orders[*orders_num-1].small_bottles);
+                }
+                else if (strcmp(key, "big_bottles") == 0) {
+                    sscanf(value, "%d", &orders[*orders_num-1].big_bottles);
+                }
+                else if (strcmp(key, "initial_price") == 0) {
+                    sscanf(value, "%f", &orders[*orders_num-1].initial_price);
+                }
+                else if (strcmp(key, "discount") == 0) {
+                    sscanf(value, "%f", &orders[*orders_num-1].discount);
+                }
+            }
+        }
+
+        indent = 0;
     }
 
     fclose(file_handler);
@@ -273,10 +314,10 @@ void modify_order(Order orders[], int orders_num, int action) {
     }
     else if (action == CLOSE) {
         if (orders[order_idx].initial_price > 600) {
-            orders[order_idx].discount_percentage = 0.2;
+            orders[order_idx].discount = 0.2;
         }
         else if (orders[order_idx].initial_price > 200 || (orders[order_idx].small_bottles + orders[order_idx].big_bottles) > 3000) {
-            orders[order_idx].discount_percentage = 0.08;
+            orders[order_idx].discount = 0.08;
         }
 
         orders[order_idx].status = CLOSED;
