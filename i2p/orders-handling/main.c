@@ -310,7 +310,7 @@ void modify_order(Order orders[], int orders_num, int action) {
             orders[order_idx].small_bottles * small_bottle_cost +
             orders[order_idx].big_bottles * big_bottle_cost;
         orders[order_idx].status = READY;
-        
+
         display_orders(orders, orders_num, order_idx);
     }
     else if (action == CLOSE) {
