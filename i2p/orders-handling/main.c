@@ -17,7 +17,8 @@
 #define CLOSE 2
 
 #define MAX_DATA_LINE_LEN 150
-#define DATA_NUM 9  // number of Order struct members
+#define FULL_NAME "%[a-zA-Z ]"
+#define DATE "%[0-9/]"
 
 typedef struct order {
     int status;
@@ -234,12 +235,12 @@ void export_orders(char filename[], Order orders[], int orders_num, int status) 
 
 void import_orders(char filename[], Order orders[], int *orders_num, int status) {
     char buffer[MAX_DATA_LINE_LEN];
-    int indent=0;
     char key[20], value[20];
+    int indent = 0;
 
     FILE *file_handler = fopen(filename, "r");
 
-    while (fgets(buffer, 150, file_handler) != NULL) {
+    while (fgets(buffer, MAX_DATA_LINE_LEN, file_handler) != NULL) {
         while (buffer[indent] == ' ') {
             indent++;
         }
@@ -247,22 +248,22 @@ void import_orders(char filename[], Order orders[], int *orders_num, int status)
         if (buffer[0] != '\n') {
             if (indent == 0) (*orders_num)++;
             else if (indent == 2) {
-                sscanf(buffer, "  %[_a-zA-Z]: %[a-zA-Z0-9-/. ]", key, value);
+                sscanf(buffer, "  %20[^:]: %[a-zA-Z0-9-/. ]", key, value);
 
                 if (strcmp(key, "status") == 0) {
                     sscanf(value, "%d", &orders[*orders_num-1].status);
                 }
                 else if (strcmp(key, "customer_name") == 0) {
-                    sscanf(value, "%[a-zA-Z ]", &orders[*orders_num-1].customer_name);
+                    sscanf(value, FULL_NAME, &orders[*orders_num-1].customer_name);
                 }
                 else if (strcmp(key, "creation_date") == 0) {
-                    sscanf(value, "%[0-9/]", &orders[*orders_num-1].creation_date);
+                    sscanf(value, DATE, &orders[*orders_num-1].creation_date);
                 }
                 else if (strcmp(key, "date") == 0) {
-                    sscanf(value, "%[0-9/]", &orders[*orders_num-1].date);
+                    sscanf(value, DATE, &orders[*orders_num-1].date);
                 }
                 else if (strcmp(key, "execution_date") == 0) {
-                    sscanf(value, "%[0-9/]", &orders[*orders_num-1].execution_date);
+                    sscanf(value, DATE, &orders[*orders_num-1].execution_date);
                 }
                 else if (strcmp(key, "small_bottles") == 0) {
                     sscanf(value, "%d", &orders[*orders_num-1].small_bottles);

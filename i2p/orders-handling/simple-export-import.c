@@ -28,7 +28,7 @@ void import_orders(char filename[], Order orders[], int *orders_num, int status)
 
     FILE *file_handler = fopen(filename, "r");
 
-    while (fgets(buffer, 150, file_handler) != NULL) {
+    while (fgets(buffer, MAX_DATA_LINE_LEN, file_handler) != NULL) {
 
         sscanf(buffer, "%d;%[a-zA-Z ];%[0-9/];%[0-9/];%[0-9/];%d;%d;%f;%f",
             &orders[*orders_num].status,
