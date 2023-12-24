@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define EXIT 0
+
 #define small_bottle_cost 0.008
 #define big_bottle_cost 0.02
 
@@ -37,59 +39,59 @@ typedef struct order {
 } Order;
 
 int get_choice();
-Order get_order();
-void display_orders(Order orders[], int num, int status);
-void export_orders(char filename[], Order orders[], int orders_num, int status);
-void import_orders(char filename[], Order orders[], int *orders_num);
-void modify_order(Order orders[], int orders_num, int action);
+
+Order get_order(int *last_pending);
+
+void display_orders(Order orders[], int last_closed, int last_ready, int last_pending, int status_idx);
+
+void export_orders(char filename[], Order orders[], int last_closed, int last_ready, int last_pending, int status);
+void import_orders(char filename[], Order orders[], int *last_closed, int *last_ready, int *last_pending);
+
+int place_order(Order orders[], int last_ready, int last_pending);
+int close_order(Order orders[], int last_closed, int last_ready);
 
 int main() {
-    int orders_num=0, choice = -1;
+    int choice, last_closed = -1, last_ready = -1, last_pending = -1;
     Order orders[10];
 
-    do {
-        choice = get_choice();
+    while ((choice = get_choice()) != EXIT) {
 
         switch (choice) {
-            case 0:
-                break;
             case 1:
-                orders[orders_num] = get_order();
-                orders_num++;
+                orders[last_pending + 1] = get_order(&last_pending);
                 break;
             case 2:
-                display_orders(orders, orders_num, ANY_STATUS);
+                display_orders(orders, last_closed, last_ready, last_pending, ANY_STATUS);
                 break;
             case 3:
-                display_orders(orders, orders_num, PENDING);
+                display_orders(orders, last_closed, last_ready, last_pending, PENDING);
                 break;
             case 4:
-                export_orders("pending_orders.yaml", orders, orders_num, PENDING);
+                export_orders("pending_orders.yaml", orders, last_closed, last_ready, last_pending, PENDING);
                 break;
             case 5:
-                import_orders("pending_orders.yaml", orders, &orders_num);
+                import_orders("pending_orders.yaml", orders, &last_closed, &last_ready, &last_pending);
                 break;
             case 6:
-                modify_order(orders, orders_num, PLACE);
+                last_ready = place_order(orders, last_ready, last_pending);
                 break;
             case 7:
-                display_orders(orders, orders_num, READY);
+                display_orders(orders, last_closed, last_ready, last_pending, READY);
                 break;
             case 8:
-                modify_order(orders, orders_num, CLOSE);
+                last_closed = close_order(orders, last_closed, last_ready);
                 break;
             case 9:
-                display_orders(orders, orders_num, CLOSED);
+                display_orders(orders, last_closed, last_ready, last_pending, CLOSED);
                 break;
             case 10:
-                export_orders("closed_orders.yaml", orders, orders_num, CLOSED);
+                export_orders("closed_orders.yaml", orders, last_closed, last_ready, last_pending, CLOSED);
                 break;
             case 11:
-                import_orders("closed_orders.yaml", orders, &orders_num);
+                import_orders("closed_orders.yaml", orders, &last_closed, &last_ready, &last_pending);
                 break;
         }
-
-    } while (choice != 0);
+    };
 
     return 0;
 }
@@ -120,7 +122,7 @@ int get_choice() {
     return option;
 }
 
-Order get_order() {
+Order get_order(int *last_pending) {
     Order order;
 
     order.status = PENDING;
@@ -151,86 +153,130 @@ Order get_order() {
     order.initial_price = 0;
     order.discount = 0;
 
+    (*last_pending)++;
+
     return order;
 }
 
-void display_orders(Order orders[], int orders_num, int status_idx) {
-    int i=0;
+void display_orders(Order orders[], int last_closed, int last_ready, int last_pending, int status_idx) {
+    int idx, start_end[2];
     char initial_price_str[15], final_price_str[15], discount_str[8];
+
     Order *order;
 
-    if (status_idx >= 0) {  // View specific order
-        i = status_idx;
-        orders_num = status_idx + 1;
+    switch (status_idx) {
+        case ANY_STATUS:
+            start_end[0] = 0;
+            start_end[1] = last_pending;
+            break;
+        case CLOSED:
+            start_end[0] = 0;
+            start_end[1] = last_closed;
+            break;
+        case READY:
+            start_end[0] = last_closed + 1;
+            start_end[1] = last_ready;
+            break;
+        case PENDING:
+            start_end[0] = last_ready + 1;
+            start_end[1] = last_pending;
+            break;
+        default:
+            start_end[0] = start_end[1] = status_idx;
+            break;
     }
 
-    for (; i<orders_num; i++) {
-        order = &orders[i];
+    if (status_idx >= 0 || start_end[1] - start_end[0] >= 0) {
 
-        sprintf(initial_price_str, "%.2f\u20AC", order->initial_price);
-        sprintf(final_price_str, "%.2f\u20AC", order->initial_price * (1 - order->discount));
-        sprintf(discount_str, "%3.0f%%", order->discount * 100);
+        printf("   %-21s | %-10s | %-10s | %-10s | %-10s | %-10s | %-s | %-s | %-s | %-8s |\n",
+        "Name", "Bottles (s)", "Bottles (b)", "Creation", "Date", "Execution","Price (initial)", "Price (final)", "Discount", "Status");
 
-        if (order->status == PENDING) {
-            strcpy(initial_price_str, "N/A  ");
-            strcpy(final_price_str, "N/A  ");
-            strcpy(discount_str, "N/A");
+        for (idx = start_end[0]; idx <= start_end[1]; idx++) {
+            order = &orders[idx];
+
+            sprintf(initial_price_str, "%6.2f", order->initial_price);
+            sprintf(final_price_str, "%6.2f", order->initial_price * (1 - order->discount));
+            sprintf(discount_str, "%3.0f%%", order->discount * 100);
+
+            if (order->status == PENDING) {
+                strcpy(initial_price_str, "N/A");
+                strcpy(final_price_str, "N/A");
+                strcpy(discount_str, "N/A");
+            }
+            else if (order->status == READY) {
+                strcpy(final_price_str, "N/A");
+                strcpy(discount_str, "N/A");
+            }
+
+            if (status_idx == ANY_STATUS || order->status == status_idx || status_idx >= 0)
+                printf("%2d %-21s | %11d | %11d | %-10s | %-10s | %-10s | %15s | %13s | %8s | %8s |\n",
+                    idx+1,
+                    order->customer_name,
+                    order->small_bottles,
+                    order->big_bottles,
+                    order->creation_date,
+                    order->date,
+                    order->execution_date,
+                    initial_price_str,
+                    final_price_str,
+                    discount_str,
+                    order->status == PENDING ? "PENDING" : (order->status == READY ? "READY" : "CLOSED"));
         }
-        else if (order->status == READY) {
-            strcpy(final_price_str, "N/A  ");
-            strcpy(discount_str, "N/A");
-        }
-
-        if (status_idx == ANY_STATUS || order->status == status_idx || status_idx >= 0)
-            printf("%d %-21s %5d %5d %11s %11s %11s %11s%s %11s%s %4s %8s\n",
-                i+1,
-                order->customer_name,
-                order->small_bottles,
-                order->big_bottles,
-                order->creation_date,
-                order->date,
-                order->execution_date,
-                initial_price_str, (order->status != PENDING) ? "  " : "",
-                final_price_str, (order->status == CLOSED) ? "  " : "",
-                discount_str,
-                order->status == PENDING ? "PENDING" : (order->status == READY ? "READY" : "CLOSED"));
     }
+
     printf("\n");
 }
 
-void export_orders(char filename[], Order orders[], int orders_num, int status) {
-    int idx;
+void export_orders(char filename[], Order orders[], int last_closed, int last_ready, int last_pending, int status) {
+    int idx, start_end[2];
     Order *order;
 
     FILE *file_handler = fopen(filename, "w+");
 
-    for (idx=0; idx<orders_num; idx++) {
+    switch (status) {
+        case ANY_STATUS:
+            start_end[0] = 0;
+            start_end[1] = last_pending;
+            break;
+        case CLOSED:
+            start_end[0] = 0;
+            start_end[1] = last_closed;
+            break;
+        case READY:
+            start_end[0] = last_closed + 1;
+            start_end[1] = last_ready;
+            break;
+        case PENDING:
+            start_end[0] = last_ready + 1;
+            start_end[1] = last_pending;
+            break;
+    }
+
+    for (idx=start_end[0]; idx<=start_end[1]; idx++) {
 
         order = &orders[idx];
 
-        if (order->status == status || status == ANY_STATUS) {
-            fprintf(file_handler,
-                "%d:\n"
-                "  status: %d\n"
-                "  customer_name: %s\n"
-                "  creation_date: %s\n"
-                "  date: %s\n"
-                "  execution_date: %s\n"
-                "  small_bottles: %d\n"
-                "  big_bottles: %d\n"
-                "  initial_price: %f\n"
-                "  discount: %f\n",
-                idx,
-                order->status,
-                order->customer_name,
-                order->creation_date,
-                order->date,
-                order->execution_date,
-                order->small_bottles,
-                order->big_bottles,
-                order->initial_price,
-                order->discount);
-        }
+        fprintf(file_handler,
+            "%d:\n"
+            "  status: %d\n"
+            "  customer_name: %s\n"
+            "  creation_date: %s\n"
+            "  date: %s\n"
+            "  execution_date: %s\n"
+            "  small_bottles: %d\n"
+            "  big_bottles: %d\n"
+            "  initial_price: %f\n"
+            "  discount: %f\n",
+            (idx + 1) - start_end[0],
+            order->status,
+            order->customer_name,
+            order->creation_date,
+            order->date,
+            order->execution_date,
+            order->small_bottles,
+            order->big_bottles,
+            order->initial_price,
+            order->discount);
     }
 
     fclose(file_handler);
@@ -238,32 +284,52 @@ void export_orders(char filename[], Order orders[], int orders_num, int status) 
     printf("Orders Exported\n\n");
 }
 
-void import_orders(char filename[], Order orders[], int *orders_num) {
+void import_orders(char filename[], Order orders[], int *last_closed, int *last_ready, int *last_pending) {
     char buffer[MAX_DATA_LINE_LEN];
     char key[20], value[20];
-    int indent = 0;
+    int idx = -1, indent = 0;
     Order *order;
 
     FILE *file_handler = fopen(filename, "r");
 
     if (file_handler != 0) {
+
+        (*last_closed) = (*last_ready) = (*last_pending) = -1;
+
         while (fgets(buffer, MAX_DATA_LINE_LEN, file_handler) != NULL) {
 
+            // Check indentation
             while (buffer[indent] == ' ') {
                 indent++;
             }
 
             if (buffer[0] != '\n') {
+
                 if (indent == 0) {
-                    (*orders_num)++;
+                    idx++;
                 }
                 else if (indent == 2) {
-                    order = &orders[*orders_num-1];
+                    order = &orders[idx];
 
                     sscanf(buffer, "  %20[^:]: %[a-zA-Z0-9-/. ]", key, value);
 
                     if (strcmp(key, "status") == 0) {
                         sscanf(value, "%d", &order->status);
+
+                        switch (order->status) {
+                            case CLOSED:
+                                (*last_closed)++;
+                                (*last_ready)++;
+                                (*last_pending)++;
+                                break;
+                            case READY:
+                                (*last_ready)++;
+                                (*last_pending)++;
+                                break;
+                            case PENDING:
+                                (*last_pending)++;
+                                break;
+                        }
                     }
                     else if (strcmp(key, "customer_name") == 0) {
                         sscanf(value, FULL_NAME, &order->customer_name);
@@ -303,34 +369,32 @@ void import_orders(char filename[], Order orders[], int *orders_num) {
     }
 }
 
-void modify_order(Order orders[], int orders_num, int action) {
+int place_order(Order orders[], int last_ready, int last_pending) {
 
-    // First come first served
-
-    // Pending:                     Ready:
-    // 1. Calculate initial price   1. Calculate discount
-    // 2. PENDING -> READY          2. READY -> CLOSED
-
-    int order_idx = 0, target_status = (action == PLACE) ? PENDING : READY;
     Order *order;
 
-    while(orders[order_idx].status != target_status && order_idx<orders_num) {
-        order_idx++;
-    }
-    order = &orders[order_idx];
+    if (last_ready < last_pending) {
+        order = &orders[++last_ready];
 
-    if (order_idx == orders_num) {
-        printf("No order found for this action\n");
-    }
-    else if (action == PLACE) {
         order->initial_price =
             order->small_bottles * small_bottle_cost +
             order->big_bottles * big_bottle_cost;
         order->status = READY;
-
-        display_orders(orders, orders_num, order_idx);
     }
-    else if (action == CLOSE) {
+    else {
+        printf("No pending order found!\n\n");
+    }
+
+    return last_ready;
+}
+
+int close_order(Order orders[], int last_closed, int last_ready) {
+
+    Order *order;
+
+    if (last_closed < last_ready) {
+        order = &orders[++last_closed];
+
         if (order->initial_price > 600) {
             order->discount = 0.2;
         }
@@ -341,9 +405,10 @@ void modify_order(Order orders[], int orders_num, int action) {
         }
 
         order->status = CLOSED;
-
-        display_orders(orders, orders_num, order_idx);
+    }
+    else {
+        printf("No ready order found!\n\n");
     }
 
-    printf("\n");
+    return last_closed;
 }
